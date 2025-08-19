@@ -1,0 +1,18 @@
+# DeepSeek CLI MCP Configuration
+# Add your MCP servers here
+
+[[servers]]
+name = "filesystem"
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+
+# Example for other MCP servers:
+# [[servers]]
+# name = "github"
+# command = "npx"
+# args = ["-y", "@modelcontextprotocol/server-github"]
+#
+# [[servers]]
+# name = "sqlite"
+# command = "npx"
+# args = ["-y", "@modelcontextprotocol/server-sqlite", "path/to/db.sqlite"]
