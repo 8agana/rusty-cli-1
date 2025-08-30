@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
+use std::any::Any;
 use std::collections::HashMap;
 use std::io::Write as _;
 use tokio::io::AsyncWriteExt;
@@ -65,6 +66,9 @@ impl ToolExecutor for ShellTool {
         Ok(format!("stdout:\n{}\nstderr:\n{}", stdout, stderr))
     }
 
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct CalculatorTool;
@@ -99,6 +103,9 @@ impl ToolExecutor for CalculatorTool {
         Ok(format!("{} = {}", expression, answer))
     }
 
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct FileReadTool;
@@ -146,6 +153,9 @@ impl ToolExecutor for FileReadTool {
         Ok(out)
     }
 
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct FileWriteTool;
@@ -193,6 +203,9 @@ impl ToolExecutor for FileWriteTool {
         Ok(format!("ok: {} bytes", content.len()))
     }
 
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct ToolRegistry {
@@ -601,6 +614,9 @@ impl ToolExecutor for ListDirTool {
         }
         Ok(out.join("\n"))
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct FindTextTool;
@@ -656,6 +672,9 @@ impl ToolExecutor for FindTextTool {
         }
         Ok(out)
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 // Edit file using unified diff
@@ -678,6 +697,9 @@ impl ToolExecutor for EditFileTool {
         let new = apply_unified_diff(&original, diff)?;
         tokio::fs::write(path, new).await?;
         Ok("ok".into())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -708,7 +730,7 @@ fn apply_unified_diff(original: &str, diff: &str) -> Result<String> {
             }
             // Now consume hunk lines until next hunk or EOF
             while let Some(next) = iter.peek() {
-                let c = next.as_bytes().first().copied().unwrap_or(b' ');
+                let c = next.as_bytes().get(0).copied().unwrap_or(b' ');
                 if c == b'@' {
                     break;
                 }
@@ -780,6 +802,9 @@ impl ToolExecutor for DeleteFileTool {
         trash::delete(path)?;
         Ok(format!("moved to recycle bin: {}", path))
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct UndeleteFileTool;
@@ -808,6 +833,9 @@ impl ToolExecutor for UndeleteFileTool {
             anyhow::bail!("no backup found for {}", path)
         }
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct GitStatusTool;
@@ -824,6 +852,9 @@ impl ToolExecutor for GitStatusTool {
             .output()
             .await?;
         Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -845,6 +876,9 @@ impl ToolExecutor for GitDiffTool {
         }
         let out = cmd.output().await?;
         Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -877,6 +911,9 @@ impl ToolExecutor for GitApplyTool {
             anyhow::bail!(String::from_utf8_lossy(&out.stderr).to_string());
         }
         Ok("applied".into())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -912,6 +949,9 @@ impl ToolExecutor for HttpGetTool {
             }
         }
         Ok(String::from_utf8_lossy(&out).into_owned())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -960,6 +1000,9 @@ impl ToolExecutor for HttpPostTool {
         }
         Ok(String::from_utf8_lossy(&out).into_owned())
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct FileInfoTool;
@@ -978,6 +1021,9 @@ impl ToolExecutor for FileInfoTool {
         let size = meta.len();
         let is_dir = meta.is_dir();
         Ok(json!({"path": path, "size": size, "is_dir": is_dir}).to_string())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -998,6 +1044,9 @@ impl ToolExecutor for ChecksumTool {
         hasher.update(&data);
         let hex = format!("{:x}", hasher.finalize());
         Ok(json!({"algorithm":"sha256","hex":hex}).to_string())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -1020,6 +1069,9 @@ impl ToolExecutor for JsonQueryTool {
         let v: Value = serde_json::from_str(&text)?;
         let res = v.pointer(pointer).cloned().unwrap_or(Value::Null);
         Ok(res.to_string())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -1044,6 +1096,9 @@ impl ToolExecutor for YamlQueryTool {
         let res = v.pointer(pointer).cloned().unwrap_or(Value::Null);
         Ok(res.to_string())
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct CargoTool;
@@ -1066,6 +1121,9 @@ impl ToolExecutor for CargoTool {
             String::from_utf8_lossy(&out.stdout),
             String::from_utf8_lossy(&out.stderr)
         ))
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -1101,6 +1159,9 @@ impl ToolExecutor for GitCommitTool {
             anyhow::bail!(String::from_utf8_lossy(&out.stderr).to_string());
         }
         Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -1160,6 +1221,9 @@ impl ToolExecutor for GitBranchTool {
             )),
         }
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct FormatRustTool;
@@ -1182,6 +1246,9 @@ impl ToolExecutor for FormatRustTool {
             out.status.code().unwrap_or(-1),
             String::from_utf8_lossy(&out.stderr)
         ))
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -1210,7 +1277,7 @@ impl ToolExecutor for ZipTool {
             let options = zip::write::FileOptions::default()
                 .compression_method(zip::CompressionMethod::Deflated);
             if path.is_dir() {
-                let walker = walkdir::WalkDir::new(path).into_iter();
+                let walker = walkdir::WalkDir::new(&path).into_iter();
                 let base = path;
                 for entry in walker.flatten() {
                     let p = entry.path();
@@ -1234,6 +1301,9 @@ impl ToolExecutor for ZipTool {
         })
         .await??;
         Ok(format!("created {}", output_report))
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -1277,6 +1347,9 @@ impl ToolExecutor for UnzipTool {
         .await??;
         Ok(format!("extracted to {}", out_report))
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct ListDeletedTool;
@@ -1295,6 +1368,9 @@ impl ToolExecutor for ListDeletedTool {
             out.push_str(&format!("{}\t{}\n", ts, path));
         }
         Ok(out)
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -1320,18 +1396,20 @@ impl ToolExecutor for DbQueryTool {
             .into_iter()
             .map(|s| s.to_string())
             .collect();
+        let col_len = col_names.len();
         let binds: Vec<serde_json::Value> = params
             .get("params")
             .and_then(|v| v.as_array())
             .cloned()
             .unwrap_or_default();
         let rows = stmt.query_map(
-            rusqlite::params_from_iter(binds.iter().map(json_to_sql)),
+            rusqlite::params_from_iter(binds.iter().map(|v| json_to_sql(v))),
             move |row| {
                 let mut obj = serde_json::Map::new();
-                for (i, name) in col_names.iter().enumerate() {
+                for i in 0..col_len {
+                    let name = col_names[i].clone();
                     let val = sql_value_to_json(row, i);
-                    obj.insert(name.clone(), val);
+                    obj.insert(name, val);
                 }
                 Ok(serde_json::Value::Object(obj))
             },
@@ -1341,6 +1419,9 @@ impl ToolExecutor for DbQueryTool {
             out.push(r?);
         }
         Ok(serde_json::Value::Array(out).to_string())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -1400,6 +1481,9 @@ impl ToolExecutor for AddNoteTool {
         let id = conn.last_insert_rowid();
         Ok(serde_json::json!({"id": id}).to_string())
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 pub struct ListNotesTool;
@@ -1447,5 +1531,8 @@ impl ToolExecutor for ListNotesTool {
             }
         }
         Ok(serde_json::Value::Array(out).to_string())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }

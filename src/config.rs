@@ -8,12 +8,17 @@ pub struct Config {
     pub api_key: Option<String>,
     pub default_model: Option<String>,
     pub default_temperature: Option<f32>,
+    // Optional keys for other providers
+    pub openai_api_key: Option<String>,
+    pub xai_api_key: Option<String>, // Grok/xAI
+    pub grok_api_key: Option<String>,
+    pub groq_api_key: Option<String>,
 }
 
 impl Config {
     pub fn config_path() -> PathBuf {
         let mut path = dirs::config_dir().expect("Could not find config directory");
-        path.push("deepseek-cli");
+        path.push("rusty-cli");
         path.push("config.toml");
         path
     }

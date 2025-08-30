@@ -1,23 +1,27 @@
-use crate::api::{DeepSeekClient, Message};
+use crate::api::{ChatClient, Message};
+use crate::tools::Tool;
 use crate::tools::ToolRegistry;
 use anyhow::Result;
 use colored::*;
-use serde_json::json;
 use std::io::{self, Write};
 
 pub async fn interactive_mode_with_tools(
-    client: DeepSeekClient,
+    client: &dyn ChatClient,
     system_prompt: Option<String>,
 ) -> Result<()> {
-    println!("{}", "DeepSeek Interactive Chat with Tools".bold().cyan());
-    println!("{}", "Available tools: shell, calculator, read_file, write_file".green());
+    println!("{}", "Rusty Interactive Chat with Tools".bold().cyan());
+    println!(
+        "{}",
+        "Available tools: shell, calculator, read_file, write_file".green()
+    );
     println!("{}", "Type 'exit' or 'quit' to end the session".dimmed());
     println!("{}", "Type 'clear' to clear chat history".dimmed());
+    println!("{}", "Type ':tools off' to return to normal chat".dimmed());
     println!();
 
     let mut messages = Vec::new();
     let registry = ToolRegistry::new();
-    let tools = registry.get_tool_definitions();
+    let tools: Vec<Tool> = registry.get_tool_definitions();
 
     if let Some(sys) = system_prompt {
         messages.push(Message {
@@ -46,6 +50,10 @@ pub async fn interactive_mode_with_tools(
                 println!("{}", "Goodbye!".yellow());
                 break;
             }
+            ":tools off" => {
+                println!("leaving tools mode");
+                break;
+            }
             "clear" => {
                 messages.clear();
                 println!("{}", "Chat history cleared".yellow());
@@ -71,8 +79,8 @@ pub async fn interactive_mode_with_tools(
 
             // Check if the model wants to use tools
             if let Some(tool_calls) = &assistant_msg.tool_calls {
-                println!("{}", "DeepSeek (using tools):".bold().blue());
-                
+                println!("{}", "Rusty (using tools):".bold().blue());
+
                 // Add assistant's message with tool calls
                 messages.push(assistant_msg.clone());
 
@@ -106,9 +114,9 @@ pub async fn interactive_mode_with_tools(
 
                 // Get final response after tool execution
                 println!();
-                print!("{} ", "DeepSeek:".bold().blue());
+                print!("{} ", "Rusty:".bold().blue());
                 io::stdout().flush()?;
-                
+
                 let final_response = client
                     .complete_with_history(messages.clone(), 0.7, true)
                     .await?;
@@ -121,7 +129,7 @@ pub async fn interactive_mode_with_tools(
                 });
             } else if let Some(content) = &assistant_msg.content {
                 // Normal response without tools
-                print!("{} ", "DeepSeek:".bold().blue());
+                print!("{} ", "Rusty:".bold().blue());
                 io::stdout().flush()?;
                 println!("{}", content);
                 messages.push(assistant_msg.clone());

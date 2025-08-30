@@ -13,15 +13,38 @@ A fast, reliable CLI wrapper for the DeepSeek API written in Rust.
 
 ## Installation
 
+Quick install to use `rustycli` from anywhere:
+
 ```bash
-cargo install --path .
+./install.sh
 ```
 
-Or build manually:
+This builds a release binary and installs it to `/usr/local/bin/rusty-cli` with a convenience alias `/usr/local/bin/rustycli`.
+
+Manual install:
 
 ```bash
 cargo build --release
-cp target/release/deepseek-cli /usr/local/bin/
+sudo install -m 0755 target/release/rusty-cli /usr/local/bin/rusty-cli
+sudo ln -sf /usr/local/bin/rusty-cli /usr/local/bin/rustycli
+```
+
+## Development
+
+Run formatting, lints, and checks before committing:
+
+```
+# Format
+cargo fmt
+
+# Lint
+cargo clippy --all-targets --all-features -D warnings
+
+# Fast type-check
+cargo check
+
+# Build release
+cargo build --release
 ```
 
 ## Configuration
@@ -35,42 +58,42 @@ export DEEPSEEK_API_KEY="your-api-key"
 
 2. Command line flag:
 ```bash
-deepseek-cli --api-key "your-api-key" chat "Hello"
+rustycli --api-key "your-api-key" chat "Hello"
 ```
 
 3. Config file:
 ```bash
-deepseek-cli config set api-key "your-api-key"
+rustycli config set api-key "your-api-key"
 ```
 
 ## Usage
 
 ### Quick chat
 ```bash
-deepseek-cli chat "What is Rust?"
+rustycli chat "What is Rust?"
 ```
 
 ### Interactive mode
 ```bash
-deepseek-cli chat --interactive
+rustycli chat --interactive
 # or just
-deepseek-cli
+rustycli
 ```
 
 ### With system prompt
 ```bash
-deepseek-cli chat -s "You are a helpful coding assistant" "Write a Python hello world"
+rustycli chat -s "You are a helpful coding assistant" "Write a Python hello world"
 ```
 
 ### Different models
 ```bash
-deepseek-cli -m deepseek-coder chat "Explain this code: fn main() {}"
-deepseek-cli -m deepseek-reasoner chat "Solve: 2x + 5 = 15"
+rustycli -m deepseek-coder chat "Explain this code: fn main() {}"
+rustycli -m deepseek-reasoner chat "Solve: 2x + 5 = 15"
 ```
 
 ### No streaming (wait for complete response)
 ```bash
-deepseek-cli --no-stream chat "Tell me a joke"
+rustycli --no-stream chat "Tell me a joke"
 ```
 
 ## Commands
